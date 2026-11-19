@@ -3,8 +3,9 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import { fileURLToPath } from "node:url";
+import { detectSeniority } from "../core/seniority.js";
 import type { NormalizedJob } from "../core/types.js";
-import type { JobContactRow, JobRow, JobStatus } from "./database.types.js";
+import type { JobContactRow, JobRow, JobStatus, Seniority } from "./database.types.js";
 
 export type RadarDb = DatabaseSync;
 
@@ -15,8 +16,21 @@ const SCHEMA_PATH = fileURLToPath(new URL("../../db/schema.sql", import.meta.url
 export function createDb(path = process.env.RADAR_DB ?? DEFAULT_PATH): RadarDb {
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
   const db = new DatabaseSync(path);
+  migrate(db);
   db.exec(readFileSync(SCHEMA_PATH, "utf8"));
   return db;
+}
+
+/** Brings files created by older versions up to date. Runs before the schema so new indexes find their columns. */
+function migrate(db: RadarDb): void {
+  const columns = db.prepare("select name from pragma_table_info('jobs')").all() as { name: string }[];
+  if (columns.length === 0 || columns.some((column) => column.name === "seniority")) return;
+  db.exec("alter table jobs add column seniority text not null default 'nao_definido' check (seniority in ('junior', 'pleno', 'senior', 'nao_definido'))");
+  const rows = db.prepare("select id, title, description from jobs").all() as { id: string; title: string; description: string | null }[];
+  const update = db.prepare("update jobs set seniority = ? where id = ?");
+  transaction(db, () => {
+    for (const row of rows) update.run(detectSeniority(row.title, undefined, row.description ?? undefined), row.id);
+  });
 }
 
 type SqlRow = Record<string, SQLInputValue>;
@@ -66,8 +80,8 @@ export function upsertJobs(db: RadarDb, jobs: NormalizedJob[]): { insertedIds: s
   const find = db.prepare("select id, sources, description, apply_type from jobs where fingerprint = ?");
   const insert = db.prepare(`insert into jobs (
       id, fingerprint, source, sources, external_id, url, apply_url, apply_type, title, company,
-      location, remote_scope, language, description, posted_at, first_seen_at, last_seen_at
-    ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+      location, remote_scope, language, seniority, description, posted_at, first_seen_at, last_seen_at
+    ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const update = db.prepare(
     "update jobs set last_seen_at = ?, sources = ?, description = coalesce(description, ?), apply_type = ? where id = ?",
   );
@@ -99,6 +113,7 @@ export function upsertJobs(db: RadarDb, jobs: NormalizedJob[]): { insertedIds: s
         job.location ?? null,
         job.remoteScope,
         job.language ?? null,
+        job.seniority,
         job.description ?? null,
         postedAt,
         timestamp,
@@ -121,14 +136,15 @@ export function countUnscored(db: RadarDb): number {
 export function saveScore(
   db: RadarDb,
   id: string,
-  score: { score: number; reason: string; requirements: string[]; language: string | null; skipReason?: string },
+  score: { score: number; reason: string; requirements: string[]; language: string | null; seniority?: Seniority; skipReason?: string },
 ): void {
   db.prepare(
     `update jobs set score = ?, score_reason = ?, requirements = ?, language = coalesce(?, language), scored_at = ?,
+       seniority = case when seniority = 'nao_definido' then coalesce(?, seniority) else seniority end,
        status = case when ? is not null and status = 'new' then 'skipped' else status end,
        status_reason = coalesce(?, status_reason)
      where id = ?`,
-  ).run(score.score, score.reason, JSON.stringify(score.requirements), score.language, now(), score.skipReason ?? null, score.skipReason ?? null, id);
+  ).run(score.score, score.reason, JSON.stringify(score.requirements), score.language, now(), score.seniority ?? null, score.skipReason ?? null, score.skipReason ?? null, id);
 }
 
 export function jobsByIds(db: RadarDb, ids: string[]): JobRow[] {

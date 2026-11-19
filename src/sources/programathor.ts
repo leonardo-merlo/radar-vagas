@@ -24,6 +24,7 @@ export function parseProgramathorPage(html: string): RawJob[] {
         company: span("fa-briefcase") ?? "Empresa não informada",
         location,
         locationHint: location,
+        seniorityHint: span("fa-chart-bar"),
         description: [span("fa-chart-bar"), span("fa-file-alt"), tags && `Tecnologias: ${tags}`].filter(Boolean).join(" · "),
         language: "pt",
       },

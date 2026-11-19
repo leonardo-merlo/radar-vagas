@@ -1,4 +1,4 @@
-import type { JobStatus, RemoteScope } from "./database.types";
+import type { JobStatus, RemoteScope, Seniority } from "./database.types";
 
 export const SOURCES = [
   "linkedin",
@@ -30,6 +30,13 @@ export const SCOPE_LABEL: Record<RemoteScope, string> = {
   unknown: "Remota, sem região",
 };
 
+export const SENIORITY_LABEL: Record<Seniority, string> = {
+  junior: "Júnior",
+  pleno: "Pleno",
+  senior: "Sênior",
+  nao_definido: "Não definido",
+};
+
 export const PERIODS = { "1": "Hoje", "7": "7 dias", "30": "30 dias", "90": "90 dias", todos: "Tudo" } as const;
 export type Period = keyof typeof PERIODS;
 
@@ -39,6 +46,7 @@ export type Sort = keyof typeof SORTS;
 export interface JobFilters {
   status: JobStatus | "todas" | "abertas";
   scope: RemoteScope | "todas";
+  seniority: Seniority | "todos";
   language: "pt" | "en" | "todas";
   source: (typeof SOURCES)[number] | "todas";
   location: string;
@@ -66,6 +74,7 @@ export function parseFilters(params: RawParams): JobFilters {
   return {
     status: oneOf(first(params, "status"), ["todas", "abertas", ...(Object.keys(STATUS_LABEL) as JobStatus[])], "abertas"),
     scope: oneOf(first(params, "remota"), ["todas", ...(Object.keys(SCOPE_LABEL) as RemoteScope[])], "todas"),
+    seniority: oneOf(first(params, "nivel"), ["todos", ...(Object.keys(SENIORITY_LABEL) as Seniority[])], "todos"),
     language: oneOf(first(params, "idioma"), ["todas", "pt", "en"], "todas"),
     source: oneOf(first(params, "fonte"), ["todas", ...SOURCES], "todas"),
     location: (first(params, "local") ?? "").trim().slice(0, 60),
@@ -96,6 +105,7 @@ export function toSearch(filters: JobFilters, overrides: Partial<JobFilters> = {
   const params = new URLSearchParams();
   if (merged.status !== "abertas") params.set("status", merged.status);
   if (merged.scope !== "todas") params.set("remota", merged.scope);
+  if (merged.seniority !== "todos") params.set("nivel", merged.seniority);
   if (merged.language !== "todas") params.set("idioma", merged.language);
   if (merged.source !== "todas") params.set("fonte", merged.source);
   if (merged.location) params.set("local", merged.location);

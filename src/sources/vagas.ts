@@ -26,6 +26,7 @@ export function parseVagasPage(html: string): RawJob[] {
         company: clean(card.match(/class="emprVaga">([\s\S]*?)<\/span>/)?.[1]) ?? "Empresa não informada",
         location,
         locationHint: location,
+        seniorityHint: clean(card.match(/class="nivelVaga">([\s\S]*?)<\/span>/)?.[1]),
         description: clean(card.match(/class="detalhes">([\s\S]*?)<\/div>/)?.[1]),
         postedAt: date ? `${date[3]}-${date[2]}-${date[1]}` : undefined,
         language: "pt",

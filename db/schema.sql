@@ -20,6 +20,8 @@ create table if not exists jobs (
   remote_scope text not null default 'unknown'
     check (remote_scope in ('worldwide', 'latam', 'brazil', 'europe', 'unknown')),
   language text,
+  seniority text not null default 'nao_definido'
+    check (seniority in ('junior', 'pleno', 'senior', 'nao_definido')),
   description text,
   requirements text,
   posted_at text,

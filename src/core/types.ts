@@ -1,4 +1,4 @@
-import type { ApplyType, RemoteScope } from "../db/database.types.js";
+import type { ApplyType, RemoteScope, Seniority } from "../db/database.types.js";
 
 export interface RawJob {
   source: SourceName;
@@ -13,6 +13,8 @@ export interface RawJob {
   locationHint?: string;
   /** True when the source itself flags the job as remote. */
   remoteFlag?: boolean;
+  /** Level as the board labels it ("Entry-level", "Júnior/Trainee"), when it has such a field. */
+  seniorityHint?: string;
   description?: string;
   postedAt?: string;
   language?: "pt" | "en";
@@ -20,6 +22,7 @@ export interface RawJob {
 
 export interface NormalizedJob extends RawJob {
   sources: SourceName[];
+  seniority: Seniority;
   fingerprint: string;
   remoteScope: RemoteScope;
 }

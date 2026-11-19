@@ -5,7 +5,7 @@ import { setContactStatus } from "@/app/actions";
 import { CopyButton } from "@/components/vagas/copy-button";
 import { TriageButtons } from "@/components/vagas/triage-buttons";
 import type { ContactKind, ContactStatus } from "@/lib/database.types";
-import { postedDate, SCOPE_LABEL, STATUS_LABEL } from "@/lib/filters";
+import { postedDate, SCOPE_LABEL, SENIORITY_LABEL, STATUS_LABEL } from "@/lib/filters";
 import { getJob } from "@/lib/queries";
 
 const KIND_LABEL: Record<ContactKind, string> = {
@@ -53,7 +53,7 @@ async function Job({ params }: { params: PageProps<"/vaga/[id]">["params"] }) {
           <h1 className="text-2xl">{job.title}</h1>
           <p className="text-tinta-media">
             {job.company}
-            {job.location ? ` · ${job.location}` : ""} · {SCOPE_LABEL[job.remote_scope]}
+            {job.location ? ` · ${job.location}` : ""} · {SCOPE_LABEL[job.remote_scope]} · {SENIORITY_LABEL[job.seniority]}
           </p>
           <p className="text-sm text-tinta-media">
             {posted.seenOnly ? "Vista pelo radar em " : "Publicada em "}

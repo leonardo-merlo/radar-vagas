@@ -1,4 +1,4 @@
-import { PERIODS, SCOPE_LABEL, SORTS, SOURCES, STATUS_LABEL, type JobFilters } from "@/lib/filters";
+import { PERIODS, SCOPE_LABEL, SENIORITY_LABEL, SORTS, SOURCES, STATUS_LABEL, type JobFilters } from "@/lib/filters";
 
 function Select({ name, label, value, options }: { name: string; label: string; value: string; options: [string, string][] }) {
   return (
@@ -17,7 +17,7 @@ function Select({ name, label, value, options }: { name: string; label: string; 
 
 export function FilterForm({ filters }: { filters: JobFilters }) {
   return (
-    <form method="get" className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-10" data-testid="filtros">
+    <form method="get" className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11" data-testid="filtros">
       <Select
         name="status"
         label="Status"
@@ -25,6 +25,7 @@ export function FilterForm({ filters }: { filters: JobFilters }) {
         options={[["abertas", "Abertas"], ["todas", "Todas"], ...Object.entries(STATUS_LABEL)]}
       />
       <Select name="remota" label="Remota" value={filters.scope} options={[["todas", "Todas"], ...Object.entries(SCOPE_LABEL)]} />
+      <Select name="nivel" label="Nível" value={filters.seniority} options={[["todos", "Todos"], ...Object.entries(SENIORITY_LABEL)]} />
       <Select name="idioma" label="Idioma" value={filters.language} options={[["todas", "Todos"], ["pt", "Português"], ["en", "Inglês"]]} />
       <Select name="fonte" label="Fonte" value={filters.source} options={[["todas", "Todas"], ...SOURCES.map((source): [string, string] => [source, source])]} />
       <Select name="periodo" label="Coletada em" value={filters.period} options={Object.entries(PERIODS)} />

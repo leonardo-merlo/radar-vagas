@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { stripHtml, truncate } from "./html.js";
 import { classifyRemoteScope } from "./location.js";
+import { detectSeniority } from "./seniority.js";
 import { simplify } from "./text.js";
 import type { NormalizedJob, RawJob } from "./types.js";
 
@@ -23,6 +24,7 @@ export function normalizeJob(raw: RawJob): NormalizedJob {
     company,
     description,
     sources: [raw.source],
+    seniority: detectSeniority(title, raw.seniorityHint, description),
     fingerprint: fingerprintOf(company, title),
     remoteScope: classifyRemoteScope(raw),
   };

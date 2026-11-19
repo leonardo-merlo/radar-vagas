@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseClaudeOutput } from "./score.js";
 
-const result = { id: "a", score: 80, reason: "ok", requirements: ["Node.js"], language: "en", eligibleFromBrazil: true };
+const result = { id: "a", score: 80, reason: "ok", requirements: ["Node.js"], language: "en", seniority: "junior", eligibleFromBrazil: true };
 
 describe("parseClaudeOutput", () => {
   it("reads structured_output from claude -p --output-format json", () => {

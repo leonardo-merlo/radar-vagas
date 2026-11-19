@@ -55,6 +55,7 @@ export async function listJobs(filters: JobFilters): Promise<{ jobs: JobRow[]; t
   if (filters.status === "abertas") where.push("status in ('new', 'approved', 'pending_me')");
   else if (filters.status !== "todas") add("status = ?", filters.status);
   if (filters.scope !== "todas") add("remote_scope = ?", filters.scope);
+  if (filters.seniority !== "todos") add("seniority = ?", filters.seniority);
   if (filters.language !== "todas") add("language = ?", filters.language);
   if (filters.source !== "todas") add("exists (select 1 from json_each(jobs.sources) where value = ?)", filters.source);
   if (filters.location) add("lower(location) like lower(?)", likePattern(filters.location));

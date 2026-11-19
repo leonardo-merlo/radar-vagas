@@ -2,6 +2,7 @@
 
 export type ApplyType = "easy_apply" | "form" | "email" | "external" | "unknown";
 export type RemoteScope = "worldwide" | "latam" | "brazil" | "europe" | "unknown";
+export type Seniority = "junior" | "pleno" | "senior" | "nao_definido";
 export type JobStatus = "new" | "approved" | "skipped" | "applied" | "pending_me" | "failed";
 export type ContactKind = "recruiter" | "tech_recruiter" | "talent_acquisition" | "hiring_manager" | "team_member" | "other";
 export type ContactStatus = "found" | "invited" | "messaged" | "replied" | "ignored";
@@ -20,6 +21,7 @@ export type JobRow = {
   location: string | null;
   remote_scope: RemoteScope;
   language: string | null;
+  seniority: Seniority;
   description: string | null;
   requirements: string[] | null;
   posted_at: string | null;

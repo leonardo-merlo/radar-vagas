@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { loadConfig, type RadarConfig } from "./config.js";
 import { eligibility } from "./core/location.js";
 import { dedupe, normalizeJob } from "./core/normalize.js";
@@ -51,7 +51,12 @@ async function collect(source: Source, shared: Omit<SourceContext, "warnings">):
   }
 }
 
-async function collectAll(config: RadarConfig, db: RadarDb | undefined): Promise<void> {
+interface CollectResult {
+  insertedIds: string[];
+  failedSources: string[];
+}
+
+async function collectAll(config: RadarConfig, db: RadarDb | undefined): Promise<CollectResult> {
   const context: Omit<SourceContext, "warnings"> = {
     keywordsBr: config.keywordsBr,
     broadTermsBr: config.broadTermsBr,
@@ -67,7 +72,7 @@ async function collectAll(config: RadarConfig, db: RadarDb | undefined): Promise
     writeFileSync("dry-run.json", JSON.stringify(unique, null, 2));
     for (const { summary } of collected) printSummary(summary);
     console.log(`Total após deduplicar: ${unique.length}. Modo teste: nada gravado. Amostra em dry-run.json`);
-    return;
+    return { insertedIds: [], failedSources: [] };
   }
 
   const runId = randomUUID();
@@ -80,6 +85,7 @@ async function collectAll(config: RadarConfig, db: RadarDb | undefined): Promise
     printSummary(summary);
   }
   console.log(`Total após deduplicar: ${unique.length} · novas: ${insertedIds.length}`);
+  return { insertedIds, failedSources: collected.filter((entry) => !entry.summary.ok).map((entry) => entry.summary.source) };
 }
 
 function printSummary(summary: SourceSummary): void {
@@ -111,6 +117,7 @@ async function scorePending(config: RadarConfig, db: RadarDb): Promise<void> {
             reason: result.reason,
             requirements: result.requirements,
             language: result.language === "other" ? null : result.language,
+            seniority: result.seniority,
             skipReason: result.eligibleFromBrazil ? undefined : "Restrição de local (não aceita Brasil/LATAM/UE)",
           });
           scored++;
@@ -126,6 +133,21 @@ async function scorePending(config: RadarConfig, db: RadarDb): Promise<void> {
   console.log(`Avaliadas: ${scored}/${pending.length}${failedBatches ? ` · ${failedBatches} lotes falharam` : ""} · sem nota no banco: ${countUnscored(db)}`);
 }
 
+/** Read by scripts/radar-diario.ps1 to ask whether to open the dashboard. */
+function writeRunSummary(db: RadarDb, config: RadarConfig, insertedIds: string[], failedSources: string[]): void {
+  const fresh = jobsByIds(db, insertedIds);
+  const summary = {
+    finishedAt: new Date().toISOString(),
+    newJobs: fresh.length,
+    newAboveCutoff: fresh.filter((job) => (job.score ?? 0) >= config.scoreCutoff && job.status !== "skipped").length,
+    cutoff: config.scoreCutoff,
+    unscored: countUnscored(db),
+    failedSources,
+  };
+  mkdirSync("data", { recursive: true });
+  writeFileSync("data/ultima-execucao.json", JSON.stringify(summary, null, 2));
+}
+
 async function main(): Promise<void> {
   const config = loadConfig();
   if (dryRun) {
@@ -134,8 +156,9 @@ async function main(): Promise<void> {
   }
   const db = createDb();
   try {
-    if (!scoreOnly) await collectAll(config, db);
+    const { insertedIds, failedSources } = scoreOnly ? { insertedIds: [], failedSources: [] } : await collectAll(config, db);
     if (!skipScoring) await scorePending(config, db);
+    writeRunSummary(db, config, insertedIds, failedSources);
     console.log("Abra o painel: npm run painel → http://localhost:3000");
   } finally {
     db.close();

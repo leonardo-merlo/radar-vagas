@@ -53,3 +53,18 @@ describe("saveContacts", () => {
     expect(jobById(db, second).contacts_searched_at).not.toBeNull();
   });
 });
+
+describe("seniority", () => {
+  it("stores the level read from the title", () => {
+    const db = createDb(":memory:");
+    const [id] = upsertJobs(db, [normalizeJob({ ...raw, title: "Desenvolvedor Pleno" })]).insertedIds as [string];
+    expect(jobById(db, id).seniority).toBe("pleno");
+  });
+
+  it("takes Claude's level only when the rules found none", () => {
+    const db = createDb(":memory:");
+    const [undefinedLevel, junior] = upsertJobs(db, [normalizeJob({ ...raw, title: "Full Stack Dev" }), normalizeJob({ ...raw, title: "Dev Jr" })]).insertedIds as [string, string];
+    for (const id of [undefinedLevel, junior]) saveScore(db, id, { score: 50, reason: "", requirements: [], language: "pt", seniority: "senior" });
+    expect([jobById(db, undefinedLevel).seniority, jobById(db, junior).seniority]).toEqual(["senior", "junior"]);
+  });
+});

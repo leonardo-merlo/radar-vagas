@@ -7,6 +7,7 @@ interface HimalayasJob {
   companyName: string;
   description?: string;
   excerpt?: string;
+  seniority?: string[];
   locationRestrictions?: string[];
   pubDate?: number;
   applicationLink: string;
@@ -36,6 +37,7 @@ export const himalayas: Source = {
           locationHint: restrictions.length === 0 ? "Worldwide" : restrictions.join(", "),
           remoteFlag: true,
           description: job.description ?? job.excerpt,
+          seniorityHint: job.seniority?.join(", "),
           postedAt: job.pubDate ? new Date(job.pubDate * 1000).toISOString() : undefined,
           language: "en",
         });
