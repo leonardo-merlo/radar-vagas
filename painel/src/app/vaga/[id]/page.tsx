@@ -5,7 +5,7 @@ import { setContactStatus } from "@/app/actions";
 import { CopyButton } from "@/components/vagas/copy-button";
 import { TriageButtons } from "@/components/vagas/triage-buttons";
 import type { ContactKind, ContactStatus } from "@/lib/database.types";
-import { SCOPE_LABEL, STATUS_LABEL } from "@/lib/filters";
+import { postedDate, SCOPE_LABEL, STATUS_LABEL } from "@/lib/filters";
 import { getJob } from "@/lib/queries";
 
 const KIND_LABEL: Record<ContactKind, string> = {
@@ -41,6 +41,7 @@ async function Job({ params }: { params: PageProps<"/vaga/[id]">["params"] }) {
   const result = await getJob(id);
   if (!result) notFound();
   const { job, contacts } = result;
+  const posted = postedDate(job.posted_at, job.first_seen_at);
 
   return (
     <>
@@ -53,6 +54,10 @@ async function Job({ params }: { params: PageProps<"/vaga/[id]">["params"] }) {
           <p className="text-tinta-media">
             {job.company}
             {job.location ? ` · ${job.location}` : ""} · {SCOPE_LABEL[job.remote_scope]}
+          </p>
+          <p className="text-sm text-tinta-media">
+            {posted.seenOnly ? "Vista pelo radar em " : "Publicada em "}
+            <span className="cod">{posted.date}</span> ({posted.relative})
           </p>
         </div>
         <TriageButtons id={job.id} status={job.status} />

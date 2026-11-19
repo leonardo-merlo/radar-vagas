@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { likePattern, parseFilters, periodStart, toSearch } from "./filters";
+import { likePattern, parseFilters, periodStart, postedDate, toSearch } from "./filters";
 
 describe("dashboard filters", () => {
   it("falls back to defaults for unknown values", () => {
@@ -31,5 +31,21 @@ describe("periodStart", () => {
 describe("likePattern", () => {
   it("strips characters that would break a PostgREST or-filter", () => {
     expect(likePattern("node,(react)%")).toBe("%node  react%");
+  });
+});
+
+describe("postedDate", () => {
+  const now = new Date("2026-11-19T15:00:00Z");
+
+  it("keeps a date-only value on its own day", () => {
+    expect(postedDate("2026-11-18T00:00:00.000Z", "2026-11-19T10:00:00.000Z", now)).toEqual({ date: "18/11/2026", relative: "ontem", seenOnly: false });
+  });
+
+  it("falls back to the day the radar first saw the job", () => {
+    expect(postedDate(null, "2026-11-19T10:00:00.000Z", now)).toMatchObject({ relative: "hoje", seenOnly: true });
+  });
+
+  it("counts old postings in months", () => {
+    expect(postedDate("2026-08-20T00:00:15.000Z", "2026-11-19T10:00:00.000Z", now).relative).toBe("há 3 meses");
   });
 });

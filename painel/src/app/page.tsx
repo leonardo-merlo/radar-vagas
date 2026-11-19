@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { FilterForm } from "@/components/vagas/filter-form";
 import { TriageButtons } from "@/components/vagas/triage-buttons";
-import { parseFilters, SCOPE_LABEL, STATUS_LABEL, toSearch } from "@/lib/filters";
+import { parseFilters, postedDate, SCOPE_LABEL, STATUS_LABEL, toSearch } from "@/lib/filters";
 import { listJobs, PAGE_SIZE } from "@/lib/queries";
 
 export default function JobsPage({ searchParams }: PageProps<"/">) {
@@ -34,6 +34,7 @@ async function Jobs({ searchParams }: { searchParams: PageProps<"/">["searchPara
             <tr>
               <th>Vaga</th>
               <th>Nota</th>
+              <th>Publicada</th>
               <th>Fonte</th>
               <th>Remota</th>
               <th>Status</th>
@@ -41,7 +42,9 @@ async function Jobs({ searchParams }: { searchParams: PageProps<"/">["searchPara
             </tr>
           </thead>
           <tbody>
-            {jobs.map((job) => (
+            {jobs.map((job) => {
+              const posted = postedDate(job.posted_at, job.first_seen_at);
+              return (
               <tr key={job.id}>
                 <th scope="row">
                   <Link href={`/vaga/${job.id}`} className="font-semibold text-tinta">
@@ -54,6 +57,10 @@ async function Jobs({ searchParams }: { searchParams: PageProps<"/">["searchPara
                   {job.score_reason ? <div className="mt-1 text-sm text-tinta-fraca">{job.score_reason}</div> : null}
                 </th>
                 <td className={`num ${job.score == null ? "text-tinta-fraca" : ""}`}>{job.score ?? "–"}</td>
+                <td className="num text-sm" title={posted.seenOnly ? "O site não informa a data; é o dia em que o radar viu a vaga" : undefined}>
+                  {posted.date}
+                  <div className="font-texto text-tinta-fraca">{posted.seenOnly ? `vista ${posted.relative}` : posted.relative}</div>
+                </td>
                 <td className="centro text-sm">
                   {job.sources.map((source) => (
                     <div key={source}>{source}</div>
@@ -68,10 +75,11 @@ async function Jobs({ searchParams }: { searchParams: PageProps<"/">["searchPara
                   <TriageButtons id={job.id} status={job.status} />
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {jobs.length === 0 ? (
               <tr>
-                <th scope="row" colSpan={6} className="text-tinta-fraca">
+                <th scope="row" colSpan={7} className="text-tinta-fraca">
                   Nenhuma vaga com esses filtros.
                 </th>
               </tr>
