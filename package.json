@@ -8,7 +8,8 @@
     "test": "vitest run",
     "radar": "tsx src/run.ts",
     "fila": "tsx src/cli/queue.ts",
-    "marca": "tsx src/cli/mark.ts"
+    "marca": "tsx src/cli/mark.ts",
+    "contatos": "tsx src/cli/contacts.ts"
   },
   "description": "Daily job radar: collects remote dev jobs from public boards, dedupes, scores fit with Claude and emails a digest.",
   "dependencies": {

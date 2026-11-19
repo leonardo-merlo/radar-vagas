@@ -21,6 +21,10 @@ Roda na pasta `~/Projects/own/vagas` com o Claude in Chrome conectado ao navegad
 2. Rodar `npm run fila -- 40` e ler o JSON (`queue`, `appliedToday`, `cutoff`). Para trocar a nota de corte só nesta execução: `npm run fila -- 40 --cutoff=60`.
 3. Ler `perfil/perfil-candidato.md` inteiro. Se faltar algo que quase toda candidatura pede (pretensão salarial, disponibilidade), perguntar tudo de uma vez agora, gravar em "Respostas aprendidas" e seguir.
 
+## Passo 1b — contatos das vagas aprovadas
+
+Antes de candidatar, rodar a skill `busca-contatos` para as vagas aprovadas que ainda não tiveram busca (`npm run contatos -- pendentes`). Se a lista vier vazia, seguir. Se o Leonardo disser para pular, seguir.
+
 ## Passo 2 — confirmar o lote (obrigatório)
 
 Mostrar uma tabela curta: nota, cargo, empresa, plataforma, idioma, CV que será usado. Perguntar uma única vez: "Posso enviar candidatura para estas N vagas?" O Leonardo pode tirar vagas da lista. Só enviar o que ele aprovar nesta conversa. Uma aprovação de outra execução ou de uma tarefa agendada não vale.

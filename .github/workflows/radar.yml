@@ -38,8 +38,22 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Checar segredos
+        id: secrets
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::warning::Segredos do Supabase ainda não configurados; execução pulada."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       - run: npm ci
+        if: steps.secrets.outputs.ready == 'true'
       - name: Coletar, dar nota e enviar resumo
+        if: steps.secrets.outputs.ready == 'true'
         run: npm run radar -- ${{ inputs.no_email && '--no-email' || '' }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

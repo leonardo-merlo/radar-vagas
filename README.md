@@ -18,9 +18,15 @@ GitHub Actions (06:30 BRT)
        ├─ scoring/score.ts   Claude returns { score 0-100, reason, requirements, eligibleFromBrazil }
        └─ digest/digest.ts   email: new jobs, top 15, count per board, boards that failed
 
+painel/ (Next.js, Supabase Auth)
+  └─ browse and filter jobs, approve or skip, contacts per job, metrics by board and period
+
 Claude Code + Claude in Chrome (manual)
+  ├─ .claude/skills/busca-contatos     for approved jobs: recruiters and team members on LinkedIn, plus a draft note
   └─ .claude/skills/aplica-nas-vagas   reads the queue, applies one by one, updates status
 ```
+
+Flow: the radar collects and scores → you approve in the dashboard → `busca-contatos` finds people to reach out to → `aplica-nas-vagas` applies.
 
 | Board | Method | Notes |
 |---|---|---|
@@ -105,12 +111,19 @@ Everything lives in `config/radar.config.json`:
 | `maxScoringPerRun` | Cap on jobs scored per run, which caps the API cost |
 | `maxDetailFetchesPerSource` | Cap on job detail pages fetched per board (LinkedIn, Trampos, GeekHunter) |
 | `dailyApplyLimits` | Max applications per platform per day, enforced by the apply queue |
+| `contactSearchesPerDay` / `contactsPerCompany` | Companies searched for contacts per day, and people saved per company |
 
 You can also approve a job by hand in Supabase (`status = 'approved'`) to put it in the queue regardless of score.
 
 ## Applying
 
 In Claude Code, inside this folder, with Claude in Chrome connected to a browser where you are logged in to LinkedIn and Gupy, say "aplica nas vagas". The skill shows the queue, asks once for approval of the batch, then applies one job at a time. It stops and marks the job `pending_me` for logins, CAPTCHAs, online tests and document numbers, and asks you when a question isn't covered by the profile (the answer is saved for next time). Status updates go through `npm run fila` and `npm run marca`.
+
+Before applying, the skill runs `busca-contatos` for approved jobs: in your LinkedIn session it opens the company's People tab, picks up to `contactsPerCompany` people (tech recruiter, talent acquisition, hiring manager, team member), saves name, headline and profile URL with a draft connection note (`npm run contatos`), and never sends anything. You send the invites and mark the contact's status in the dashboard. `contactSearchesPerDay` caps companies searched per day.
+
+## Dashboard
+
+See [painel/README.md](painel/README.md). Run `supabase/migrations/0002_contacts_and_dashboard.sql` after `0001_init.sql`.
 
 Automating applications goes against LinkedIn's user agreement and can get an account restricted. The daily limits reduce that risk; they don't remove it.
 

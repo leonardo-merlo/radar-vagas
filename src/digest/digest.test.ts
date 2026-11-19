@@ -7,7 +7,7 @@ function row(overrides: Partial<JobRow>): JobRow {
     id: "1", fingerprint: "f", source: "gupy", sources: ["gupy"], external_id: "1", url: "https://example.com/job",
     apply_url: null, apply_type: "form", title: "Dev Node", company: "Acme", location: "Remoto", remote_scope: "brazil",
     language: "pt", description: null, requirements: null, posted_at: null, first_seen_at: "", last_seen_at: "",
-    score: 50, score_reason: "ok", scored_at: null, status: "new", status_reason: null, applied_at: null, cv_used: null,
+    score: 50, score_reason: "ok", scored_at: null, status: "new", status_reason: null, applied_at: null, cv_used: null, contacts_searched_at: null,
     ...overrides,
   };
 }

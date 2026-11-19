@@ -52,5 +52,7 @@
     "gupy": 25,
     "email": 15,
     "default": 15
-  }
+  },
+  "contactSearchesPerDay": 10,
+  "contactsPerCompany": 4
 }

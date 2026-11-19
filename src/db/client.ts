@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { requireEnv } from "../config.js";
 import type { NormalizedJob } from "../core/types.js";
-import type { Database, JobRow, JobStatus } from "./database.types.js";
+import type { Database, JobContactRow, JobRow, JobStatus } from "./database.types.js";
 
 export type RadarDb = SupabaseClient<Database>;
 
@@ -143,5 +143,62 @@ export async function markJob(
     .from("application_events")
     .insert({ job_id: input.id, platform: input.platform, status: input.status, reason: input.reason ?? null });
   if (event.error) throw new Error(`markJob event: ${event.error.message}`);
+  return data;
+}
+
+/** Approved jobs whose company was not searched for contacts yet. One entry per company. */
+export async function jobsNeedingContacts(db: RadarDb, limit: number): Promise<JobRow[]> {
+  const { data, error } = await db
+    .from("jobs")
+    .select("*")
+    .eq("status", "approved")
+    .is("contacts_searched_at", null)
+    .order("score", { ascending: false, nullsFirst: false })
+    .limit(limit * 3);
+  if (error) throw new Error(`jobsNeedingContacts: ${error.message}`);
+  const byCompany = new Map<string, JobRow>();
+  for (const job of data) if (!byCompany.has(job.company.toLowerCase())) byCompany.set(job.company.toLowerCase(), job);
+  return [...byCompany.values()].slice(0, limit);
+}
+
+export async function contactsSearchedToday(db: RadarDb): Promise<number> {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const { count, error } = await db
+    .from("jobs")
+    .select("id", { count: "exact", head: true })
+    .gte("contacts_searched_at", startOfDay.toISOString());
+  if (error) throw new Error(`contactsSearchedToday: ${error.message}`);
+  return count ?? 0;
+}
+
+export async function saveContacts(db: RadarDb, job: JobRow, contacts: NewContact[]): Promise<number> {
+  if (contacts.length > 0) {
+    const rows = contacts.map((contact) => ({ ...contact, job_id: job.id, company: job.company }));
+    const { error } = await db.from("job_contacts").upsert(rows, { onConflict: "job_id,linkedin_url" });
+    if (error) throw new Error(`saveContacts: ${error.message}`);
+  }
+  // Every open job at the same company counts as searched, so the skill doesn't repeat the search.
+  const { error } = await db
+    .from("jobs")
+    .update({ contacts_searched_at: new Date().toISOString() })
+    .eq("company", job.company)
+    .is("contacts_searched_at", null);
+  if (error) throw new Error(`saveContacts mark: ${error.message}`);
+  return contacts.length;
+}
+
+export interface NewContact {
+  name: string;
+  title: string | null;
+  kind: JobContactRow["kind"];
+  linkedin_url: string;
+  why: string | null;
+  message_draft: string | null;
+}
+
+export async function jobById(db: RadarDb, id: string): Promise<JobRow> {
+  const { data, error } = await db.from("jobs").select("*").eq("id", id).single();
+  if (error) throw new Error(`jobById: ${error.message}`);
   return data;
 }

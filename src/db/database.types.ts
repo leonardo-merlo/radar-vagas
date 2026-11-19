@@ -4,6 +4,8 @@
 export type ApplyType = "easy_apply" | "form" | "email" | "external" | "unknown";
 export type RemoteScope = "worldwide" | "latam" | "brazil" | "europe" | "unknown";
 export type JobStatus = "new" | "approved" | "skipped" | "applied" | "pending_me" | "failed";
+export type ContactKind = "recruiter" | "tech_recruiter" | "talent_acquisition" | "hiring_manager" | "team_member" | "other";
+export type ContactStatus = "found" | "invited" | "messaged" | "replied" | "ignored";
 
 export type JobRow = {
   id: string;
@@ -31,6 +33,7 @@ export type JobRow = {
   status_reason: string | null;
   applied_at: string | null;
   cv_used: string | null;
+  contacts_searched_at: string | null;
 }
 
 export type SourceRunRow = {
@@ -55,6 +58,21 @@ export type ApplicationEventRow = {
   created_at: string;
 }
 
+export type JobContactRow = {
+  id: string;
+  job_id: string;
+  company: string;
+  name: string;
+  title: string | null;
+  kind: ContactKind;
+  linkedin_url: string;
+  why: string | null;
+  message_draft: string | null;
+  status: ContactStatus;
+  found_at: string;
+  contacted_at: string | null;
+}
+
 type Insertable<Row, Required extends keyof Row> = Pick<Row, Required> & Partial<Omit<Row, Required>>;
 
 export type Database = {
@@ -72,6 +90,18 @@ export type Database = {
         Update: Partial<SourceRunRow>;
         Relationships: [];
       };
+      job_contacts: {
+        Row: JobContactRow;
+        Insert: Insertable<JobContactRow, "job_id" | "company" | "name" | "linkedin_url">;
+        Update: Partial<JobContactRow>;
+        Relationships: [];
+      };
+      dashboard_users: {
+        Row: { email: string };
+        Insert: { email: string };
+        Update: { email?: string };
+        Relationships: [];
+      };
       application_events: {
         Row: ApplicationEventRow;
         Insert: Insertable<ApplicationEventRow, "job_id" | "platform" | "status">;
@@ -81,6 +111,14 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      dashboard_metrics: {
+        Args: { since: string };
+        Returns: unknown;
+      };
+      is_dashboard_user: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
       upsert_jobs: {
         Args: { payload: unknown };
         Returns: { id: string; inserted: boolean }[];
@@ -90,6 +128,8 @@ export type Database = {
       apply_type: ApplyType;
       remote_scope: RemoteScope;
       job_status: JobStatus;
+      contact_kind: ContactKind;
+      contact_status: ContactStatus;
     };
     CompositeTypes: Record<string, never>;
   };

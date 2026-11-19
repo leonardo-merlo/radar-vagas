@@ -13,6 +13,8 @@ const ConfigSchema = z.object({
   maxDetailFetchesPerSource: z.number().int().min(0),
   digestTopN: z.number().int().min(1),
   dailyApplyLimits: z.record(z.string(), z.number().int().min(0)),
+  contactSearchesPerDay: z.number().int().min(0),
+  contactsPerCompany: z.number().int().min(1),
 });
 
 export type RadarConfig = z.infer<typeof ConfigSchema>;
