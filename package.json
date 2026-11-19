@@ -1,0 +1,33 @@
+{
+  "name": "radar-vagas",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "tsx src/run.ts --dry-run",
+    "build": "tsc",
+    "lint": "tsc",
+    "test": "vitest run",
+    "radar": "tsx src/run.ts",
+    "fila": "tsx src/cli/queue.ts",
+    "marca": "tsx src/cli/mark.ts"
+  },
+  "description": "Daily job radar: collects remote dev jobs from public boards, dedupes, scores fit with Claude and emails a digest.",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.10.0",
+    "@supabase/supabase-js": "^2.119.1",
+    "fast-xml-parser": "^5.12.1",
+    "nodemailer": "^10.6.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/nodemailer": "^8.0.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
+  },
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  }
+}

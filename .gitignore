@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.local
+# Dados pessoais: nunca vão para o repositório público
+perfil/*
+!perfil/README.md
+!perfil/perfil-candidato.example.md
+!perfil/resumo-cv.example.md
+*.pdf
+*.docx
+
+# Saídas locais de teste
+dry-run.json
+digest-preview.html

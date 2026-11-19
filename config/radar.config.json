@@ -1,0 +1,56 @@
+{
+  "keywordsBr": [
+    "desenvolvedor júnior",
+    "desenvolvedor full stack júnior",
+    "desenvolvedor node.js júnior",
+    "desenvolvedor react júnior",
+    "desenvolvedor back-end júnior",
+    "trainee desenvolvedor",
+    "desenvolvedor agentes de IA",
+    "engenheiro de IA júnior",
+    "engenheiro de automação"
+  ],
+  "keywordsIntl": [
+    "junior full stack developer",
+    "junior node developer",
+    "junior react developer",
+    "junior backend developer",
+    "junior AI engineer",
+    "junior LLM engineer",
+    "AI agent developer",
+    "AI automation engineer",
+    "automation engineer",
+    "solutions engineer",
+    "implementation engineer",
+    "forward deployed engineer"
+  ],
+  "broadTermsBr": [
+    "desenvolvedor",
+    "programador",
+    "engenheiro de software",
+    "full stack",
+    "node",
+    "react",
+    "automação",
+    "inteligência artificial"
+  ],
+  "wellfoundRoles": [
+    "software-engineer",
+    "full-stack-engineer",
+    "backend-engineer",
+    "machine-learning-engineer",
+    "solutions-engineer"
+  ],
+  "scoreCutoff": 70,
+  "scoringModel": "claude-opus-5-5",
+  "scoringEffort": "low",
+  "maxScoringPerRun": 150,
+  "maxDetailFetchesPerSource": 40,
+  "digestTopN": 15,
+  "dailyApplyLimits": {
+    "linkedin": 20,
+    "gupy": 25,
+    "email": 15,
+    "default": 15
+  }
+}
