@@ -74,7 +74,7 @@ npm run radar -- --source=gupy # one board only
 npm test
 ```
 
-Daily runs log to `data/logs/radar-YYYY-MM-DD.log`. Another time: `npm run agendar -- -Hora 07:30`. To remove the task: `Unregister-ScheduledTask -TaskName "Radar de Vagas"` in PowerShell.
+At the end of each daily run a Windows popup shows how many jobs are new and asks whether to open the dashboard; Yes starts it (if it isn't running) and opens today's jobs in the browser. Daily runs log to `data/logs/radar-YYYY-MM-DD.log`. Another time: `npm run agendar -- -Hora 07:30`. To remove the task: `Unregister-ScheduledTask -TaskName "Radar de Vagas"` in PowerShell.
 
 There are no secrets and no environment variables. Optional: `RADAR_DB` points the radar and the dashboard at another database file.
 
