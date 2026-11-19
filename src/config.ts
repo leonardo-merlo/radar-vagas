@@ -8,10 +8,11 @@ const ConfigSchema = z.object({
   wellfoundRoles: z.array(z.string().min(2)),
   scoreCutoff: z.number().int().min(0).max(100),
   scoringModel: z.string().min(3),
-  scoringEffort: z.enum(["low", "medium", "high"]),
+  claudeCommand: z.string().min(1),
+  scoringBatchSize: z.number().int().min(1).max(25),
+  scoringConcurrency: z.number().int().min(1).max(4),
   maxScoringPerRun: z.number().int().min(0),
   maxDetailFetchesPerSource: z.number().int().min(0),
-  digestTopN: z.number().int().min(1),
   dailyApplyLimits: z.record(z.string(), z.number().int().min(0)),
   contactSearchesPerDay: z.number().int().min(0),
   contactsPerCompany: z.number().int().min(1),
@@ -23,11 +24,6 @@ export function loadConfig(path = "config/radar.config.json"): RadarConfig {
   return ConfigSchema.parse(JSON.parse(readFileSync(path, "utf8")));
 }
 
-export function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`Variável de ambiente ${name} não definida (veja .env.example)`);
-  return value;
-}
 
 export function dailyLimitFor(config: RadarConfig, platform: string): number {
   return config.dailyApplyLimits[platform] ?? config.dailyApplyLimits.default ?? 15;

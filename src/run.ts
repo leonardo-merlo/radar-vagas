@@ -1,22 +1,32 @@
 import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
-import { loadConfig } from "./config.js";
-import { loadLocalEnv } from "./env.js";
+import { loadConfig, type RadarConfig } from "./config.js";
 import { eligibility } from "./core/location.js";
 import { dedupe, normalizeJob } from "./core/normalize.js";
 import type { NormalizedJob, Source, SourceContext } from "./core/types.js";
-import { createDb, jobsByIds, recordSourceRun, saveScore, unscoredJobs, upsertJobs } from "./db/client.js";
-import { renderDigest, sendDigest, type SourceSummary } from "./digest/digest.js";
+import { countUnscored, createDb, jobsByIds, recordSourceRun, saveScore, unscoredJobs, upsertJobs, type RadarDb } from "./db/client.js";
 import { createScorer } from "./scoring/score.js";
 import { SOURCES } from "./sources/index.js";
 
+// Usage: npm run radar -- [--dry-run] [--no-score] [--score-only] [--source=gupy]
 const args = new Set(process.argv.slice(2));
 const dryRun = args.has("--dry-run");
-const skipEmail = args.has("--no-email");
+const skipScoring = args.has("--no-score");
+const scoreOnly = args.has("--score-only");
 const onlySource = process.argv.find((arg) => arg.startsWith("--source="))?.split("=")[1];
 
+interface SourceSummary {
+  source: string;
+  ok: boolean;
+  fetched: number;
+  kept: number;
+  inserted: number;
+  error?: string;
+  durationMs: number;
+}
+
 interface Collected {
-  summary: SourceSummary & { durationMs: number };
+  summary: SourceSummary;
   jobs: NormalizedJob[];
 }
 
@@ -41,11 +51,7 @@ async function collect(source: Source, shared: Omit<SourceContext, "warnings">):
   }
 }
 
-async function main(): Promise<void> {
-  loadLocalEnv();
-  const config = loadConfig();
-  const runId = randomUUID();
-  const today = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+async function collectAll(config: RadarConfig, db: RadarDb | undefined): Promise<void> {
   const context: Omit<SourceContext, "warnings"> = {
     keywordsBr: config.keywordsBr,
     broadTermsBr: config.broadTermsBr,
@@ -53,79 +59,87 @@ async function main(): Promise<void> {
     wellfoundRoles: config.wellfoundRoles,
     maxDetailFetches: config.maxDetailFetchesPerSource,
   };
-
   const sources = onlySource ? SOURCES.filter((source) => source.name === onlySource) : SOURCES;
   const collected = await Promise.all(sources.map((source) => collect(source, context)));
-  for (const { summary } of collected) {
-    console.log(`${summary.ok ? "ok   " : "FALHA"} ${summary.source.padEnd(15)} coletadas=${summary.fetched} mantidas=${summary.kept} ${summary.error ?? ""}`);
-  }
-
   const unique = dedupe(collected.flatMap((entry) => entry.jobs));
-  console.log(`Total após deduplicar: ${unique.length}`);
 
-  if (dryRun) {
+  if (!db) {
     writeFileSync("dry-run.json", JSON.stringify(unique, null, 2));
-    console.log("Modo teste: nada gravado no banco. Amostra em dry-run.json");
+    for (const { summary } of collected) printSummary(summary);
+    console.log(`Total após deduplicar: ${unique.length}. Modo teste: nada gravado. Amostra em dry-run.json`);
     return;
   }
 
-  const db = createDb();
-  const { insertedIds } = await upsertJobs(db, unique);
-  const newJobsBefore = await jobsByIds(db, insertedIds);
+  const runId = randomUUID();
+  const { insertedIds } = upsertJobs(db, unique);
   const insertedBySource = new Map<string, number>();
-  for (const job of newJobsBefore) insertedBySource.set(job.source, (insertedBySource.get(job.source) ?? 0) + 1);
-  for (const entry of collected) {
-    entry.summary.inserted = insertedBySource.get(entry.summary.source) ?? 0;
-    await recordSourceRun(db, { runId, ...entry.summary });
+  for (const job of jobsByIds(db, insertedIds)) insertedBySource.set(job.source, (insertedBySource.get(job.source) ?? 0) + 1);
+  for (const { summary } of collected) {
+    summary.inserted = insertedBySource.get(summary.source) ?? 0;
+    recordSourceRun(db, { runId, ...summary });
+    printSummary(summary);
   }
-  console.log(`Vagas novas: ${insertedIds.length}`);
+  console.log(`Total após deduplicar: ${unique.length} · novas: ${insertedIds.length}`);
+}
 
-  let scoredCount = 0;
-  if (config.maxScoringPerRun > 0) {
-    const scorer = createScorer(config);
-    const pending = await unscoredJobs(db, config.maxScoringPerRun);
-    const queue = [...pending];
-    async function worker(): Promise<void> {
-      for (let job = queue.shift(); job; job = queue.shift()) {
-        try {
-          const result = await scorer.score(job);
-          if (!result) continue;
-          await saveScore(db, job.id, {
+function printSummary(summary: SourceSummary): void {
+  console.log(
+    `${summary.ok ? "ok   " : "FALHA"} ${summary.source.padEnd(15)} coletadas=${summary.fetched} mantidas=${summary.kept} novas=${summary.inserted} ${summary.error ?? ""}`,
+  );
+}
+
+async function scorePending(config: RadarConfig, db: RadarDb): Promise<void> {
+  const pending = unscoredJobs(db, config.maxScoringPerRun);
+  if (pending.length === 0) {
+    console.log("Nenhuma vaga sem nota.");
+    return;
+  }
+  const scorer = createScorer(config);
+  const batches: (typeof pending)[] = [];
+  for (let start = 0; start < pending.length; start += config.scoringBatchSize) {
+    batches.push(pending.slice(start, start + config.scoringBatchSize));
+  }
+
+  let scored = 0;
+  let failedBatches = 0;
+  async function worker(): Promise<void> {
+    for (let batch = batches.shift(); batch; batch = batches.shift()) {
+      try {
+        for (const result of await scorer.scoreBatch(batch)) {
+          saveScore(db, result.id, {
             score: result.score,
             reason: result.reason,
             requirements: result.requirements,
             language: result.language === "other" ? null : result.language,
             skipReason: result.eligibleFromBrazil ? undefined : "Restrição de local (não aceita Brasil/LATAM/UE)",
           });
-          scoredCount++;
-        } catch (error) {
-          console.error(`Nota falhou para ${job.id}: ${error instanceof Error ? error.message : String(error)}`);
+          scored++;
         }
+        console.log(`Notas: ${scored}/${pending.length}`);
+      } catch (error) {
+        failedBatches++;
+        console.error(`Lote de notas falhou: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
-    await Promise.all(Array.from({ length: 4 }, worker));
-    console.log(`Avaliadas: ${scoredCount}/${pending.length}`);
   }
+  await Promise.all(Array.from({ length: config.scoringConcurrency }, worker));
+  console.log(`Avaliadas: ${scored}/${pending.length}${failedBatches ? ` · ${failedBatches} lotes falharam` : ""} · sem nota no banco: ${countUnscored(db)}`);
+}
 
-  const newJobs = await jobsByIds(db, insertedIds);
-  const unscoredLeft = (await unscoredJobs(db, 1000)).length;
-  const digest = renderDigest({
-    date: today,
-    newJobs,
-    topN: config.digestTopN,
-    cutoff: config.scoreCutoff,
-    sources: collected.map((entry) => entry.summary),
-    scoredCount,
-    unscoredLeft,
-  });
-
-  if (skipEmail) {
-    writeFileSync("digest-preview.html", digest.html);
-    console.log("E-mail não enviado (--no-email). Prévia em digest-preview.html");
+async function main(): Promise<void> {
+  const config = loadConfig();
+  if (dryRun) {
+    await collectAll(config, undefined);
     return;
   }
-  await sendDigest(digest);
-  console.log(`Resumo enviado: ${digest.subject}`);
+  const db = createDb();
+  try {
+    if (!scoreOnly) await collectAll(config, db);
+    if (!skipScoring) await scorePending(config, db);
+    console.log("Abra o painel: npm run painel → http://localhost:3000");
+  } finally {
+    db.close();
+  }
 }
 
 main().catch((error: unknown) => {

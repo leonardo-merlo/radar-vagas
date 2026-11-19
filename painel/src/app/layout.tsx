@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import Link from "next/link";
-import { signOut } from "./actions";
 import "./globals.css";
 
 const outfit = Outfit({ variable: "--font-outfit", subsets: ["latin"], weight: ["500", "600", "700"] });
@@ -29,11 +28,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Link href="/metricas" className="text-tinta-media no-underline hover:text-tinta">
               Métricas
             </Link>
-            <form action={signOut} className="ml-auto">
-              <button className="botao" type="submit">
-                Sair
-              </button>
-            </form>
           </nav>
         </header>
         <main className="folha pt-6">{children}</main>

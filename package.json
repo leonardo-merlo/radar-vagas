@@ -9,19 +9,17 @@
     "radar": "tsx src/run.ts",
     "fila": "tsx src/cli/queue.ts",
     "marca": "tsx src/cli/mark.ts",
-    "contatos": "tsx src/cli/contacts.ts"
+    "contatos": "tsx src/cli/contacts.ts",
+    "painel": "npm --prefix painel run dev",
+    "agendar": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agendar.ps1"
   },
-  "description": "Daily job radar: collects remote dev jobs from public boards, dedupes, scores fit with Claude and emails a digest.",
+  "description": "Daily job radar that runs on your own machine: collects remote dev jobs from public boards, scores fit with Claude Code and shows them in a local dashboard.",
   "dependencies": {
-    "@anthropic-ai/sdk": "^1.10.0",
-    "@supabase/supabase-js": "^2.119.1",
     "fast-xml-parser": "^5.12.1",
-    "nodemailer": "^10.6.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
-    "@types/nodemailer": "^8.0.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.1.1"

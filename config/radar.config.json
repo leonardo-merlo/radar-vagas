@@ -42,11 +42,12 @@
     "solutions-engineer"
   ],
   "scoreCutoff": 70,
-  "scoringModel": "claude-opus-5-5",
-  "scoringEffort": "low",
+  "scoringModel": "sonnet",
+  "claudeCommand": "claude",
+  "scoringBatchSize": 10,
+  "scoringConcurrency": 2,
   "maxScoringPerRun": 150,
   "maxDetailFetchesPerSource": 40,
-  "digestTopN": 15,
   "dailyApplyLimits": {
     "linkedin": 20,
     "gupy": 25,

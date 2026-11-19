@@ -1,18 +1,17 @@
 import { dailyLimitFor, loadConfig } from "../config.js";
 import { appliedTodayByPlatform, applyQueue, createDb } from "../db/client.js";
-import { loadLocalEnv } from "../env.js";
 import { platformOf } from "./platform.js";
 
 // Prints the apply queue as JSON for the "aplica nas vagas" skill.
 // Usage: npm run fila -- [limit] [--cutoff=NN]
-loadLocalEnv();
 const config = loadConfig();
 const limitArg = process.argv.slice(2).find((arg) => /^\d+$/.test(arg));
 const cutoffArg = process.argv.find((arg) => arg.startsWith("--cutoff="))?.split("=")[1];
 const cutoff = cutoffArg ? Number(cutoffArg) : config.scoreCutoff;
 
 const db = createDb();
-const [jobs, appliedToday] = await Promise.all([applyQueue(db, cutoff, Number(limitArg ?? 60)), appliedTodayByPlatform(db)]);
+const jobs = applyQueue(db, cutoff, Number(limitArg ?? 60));
+const appliedToday = appliedTodayByPlatform(db);
 
 const remaining: Record<string, number> = {};
 const queue = jobs.flatMap((job) => {

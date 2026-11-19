@@ -1,5 +1,4 @@
-// Mirrors supabase/migrations/0001_init.sql. Regenerate with:
-// npx supabase gen types typescript --project-id <id> > src/db/database.types.ts
+// Row shapes of db/schema.sql after mapping (JSON columns parsed, 0/1 as boolean).
 
 export type ApplyType = "easy_apply" | "form" | "email" | "external" | "unknown";
 export type RemoteScope = "worldwide" | "latam" | "brazil" | "europe" | "unknown";
@@ -71,66 +70,4 @@ export type JobContactRow = {
   status: ContactStatus;
   found_at: string;
   contacted_at: string | null;
-}
-
-type Insertable<Row, Required extends keyof Row> = Pick<Row, Required> & Partial<Omit<Row, Required>>;
-
-export type Database = {
-  public: {
-    Tables: {
-      jobs: {
-        Row: JobRow;
-        Insert: Insertable<JobRow, "fingerprint" | "source" | "url" | "title" | "company">;
-        Update: Partial<JobRow>;
-        Relationships: [];
-      };
-      source_runs: {
-        Row: SourceRunRow;
-        Insert: Insertable<SourceRunRow, "run_id" | "source" | "ok">;
-        Update: Partial<SourceRunRow>;
-        Relationships: [];
-      };
-      job_contacts: {
-        Row: JobContactRow;
-        Insert: Insertable<JobContactRow, "job_id" | "company" | "name" | "linkedin_url">;
-        Update: Partial<JobContactRow>;
-        Relationships: [];
-      };
-      dashboard_users: {
-        Row: { email: string };
-        Insert: { email: string };
-        Update: { email?: string };
-        Relationships: [];
-      };
-      application_events: {
-        Row: ApplicationEventRow;
-        Insert: Insertable<ApplicationEventRow, "job_id" | "platform" | "status">;
-        Update: Partial<ApplicationEventRow>;
-        Relationships: [];
-      };
-    };
-    Views: Record<string, never>;
-    Functions: {
-      dashboard_metrics: {
-        Args: { since: string };
-        Returns: unknown;
-      };
-      is_dashboard_user: {
-        Args: Record<string, never>;
-        Returns: boolean;
-      };
-      upsert_jobs: {
-        Args: { payload: unknown };
-        Returns: { id: string; inserted: boolean }[];
-      };
-    };
-    Enums: {
-      apply_type: ApplyType;
-      remote_scope: RemoteScope;
-      job_status: JobStatus;
-      contact_kind: ContactKind;
-      contact_status: ContactStatus;
-    };
-    CompositeTypes: Record<string, never>;
-  };
 }

@@ -12,3 +12,6 @@ perfil/*
 # Saídas locais de teste
 dry-run.json
 digest-preview.html
+
+# Banco local e logs
+data/

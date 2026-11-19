@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { requireDashboardUser } from "@/lib/auth";
 import { parseFilters, PERIODS, type Period } from "@/lib/filters";
 import { getMetrics } from "@/lib/queries";
 
@@ -22,11 +21,9 @@ function shortDate(day: string): string {
 
 async function Metrics({ searchParams }: { searchParams: PageProps<"/metricas">["searchParams"] }) {
   const { period } = parseFilters(await searchParams);
-  const db = await requireDashboardUser();
-  const metrics = await getMetrics(db, period);
+  const metrics = await getMetrics(period);
   const { totals } = metrics;
   const maxDay = Math.max(1, ...metrics.by_day.map((day) => day.collected));
-  const appliedByDay = new Map(metrics.applied_by_day.map((day) => [day.day, day.applied]));
 
   return (
     <>
@@ -111,7 +108,7 @@ async function Metrics({ searchParams }: { searchParams: PageProps<"/metricas">[
                   <td className="num">{stats?.above_70 ?? 0}</td>
                   <td className="num">{stats?.avg_score ?? "–"}</td>
                   <td className="num">{stats?.applied ?? 0}</td>
-                  <td className={`num text-sm ${run.ok ? "" : "text-erro"}`} title={run.error ?? undefined}>
+                  <td className={`centro text-sm ${run.ok ? "" : "text-erro"}`} title={run.error ?? undefined}>
                     {run.ok ? `ok, ${run.inserted} novas` : "falhou"}
                   </td>
                 </tr>
@@ -139,7 +136,7 @@ async function Metrics({ searchParams }: { searchParams: PageProps<"/metricas">[
             </tr>
           </thead>
           <tbody>
-            {[...metrics.by_day].reverse().map((day) => (
+            {metrics.by_day.map((day) => (
               <tr key={day.day}>
                 <th scope="row">
                   <div className="flex items-center gap-3">
@@ -149,7 +146,7 @@ async function Metrics({ searchParams }: { searchParams: PageProps<"/metricas">[
                 </th>
                 <td className="num">{day.collected}</td>
                 <td className="num">{day.above_70}</td>
-                <td className="num">{appliedByDay.get(day.day) ?? 0}</td>
+                <td className="num">{day.applied}</td>
               </tr>
             ))}
           </tbody>

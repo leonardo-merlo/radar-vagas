@@ -1,6 +1,6 @@
 ---
 name: aplica-nas-vagas
-description: Candidata o Leonardo às vagas da fila do Radar de Vagas (Supabase), uma a uma, no Chrome dele já logado, usando perfil/perfil-candidato.md como banco de respostas. Use quando ele disser "aplica nas vagas", "candidata nas vagas", "roda a fila" ou /aplica-nas-vagas.
+description: Candidata o Leonardo às vagas da fila do Radar de Vagas (banco local data/radar.db), uma a uma, no Chrome dele já logado, usando perfil/perfil-candidato.md como banco de respostas. Use quando ele disser "aplica nas vagas", "candidata nas vagas", "roda a fila" ou /aplica-nas-vagas.
 ---
 
 # aplica-nas-vagas
@@ -44,7 +44,7 @@ Para cada vaga aprovada:
 4. **Perguntas abertas e carta:** 3 a 5 frases, específicas da vaga: uma coisa concreta da empresa ou da vaga, o projeto do portfólio mais parecido com o que pedem e o que ele fez nele. Proibido: "apaixonado", "sinergia", "agregar valor", "passionate", "thrilled", "excited to", "leverage", "fast-paced", listas de adjetivos, travessões em excesso. Ler em voz alta mentalmente: se soaria igual em qualquer outra vaga, reescrever.
 5. **Pergunta que o perfil não cobre:** juntar todas as perguntas novas da vaga e perguntar ao Leonardo numa mensagem só. Gravar cada resposta em "Respostas aprendidas" (`- [AAAA-MM-DD] Pergunta → Resposta (plataforma)`) antes de continuar. Pergunta de sim/não com resposta óbvia pelo perfil não precisa perguntar.
 6. **Confirmar o envio:** só marcar como aplicada depois de ver a tela ou mensagem de confirmação da plataforma.
-7. **Registrar no Supabase** (sempre, também em falha):
+7. **Registrar no banco local** (sempre, também em falha):
    - aplicada: `npm run marca -- <id> applied <platform> "" <arquivo-do-cv>`
    - precisa dele: `npm run marca -- <id> pending_me <platform> "<motivo curto>"`
    - falhou: `npm run marca -- <id> failed <platform> "<motivo curto>"`

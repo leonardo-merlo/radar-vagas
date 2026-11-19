@@ -1,6 +1,6 @@
 ---
 name: busca-contatos
-description: Para cada vaga aprovada no Radar de Vagas, encontra no LinkedIn (no Chrome logado do Leonardo) recrutadores, tech recruiters, talent acquisition e pessoas do time da empresa, salva no Supabase e rascunha a nota de conexão. Use quando ele disser "busca contatos", "quem eu posso chamar nessas vagas" ou /busca-contatos. Também roda como passo 2 de aplica-nas-vagas.
+description: Para cada vaga aprovada no Radar de Vagas, encontra no LinkedIn (no Chrome logado do Leonardo) recrutadores, tech recruiters, talent acquisition e pessoas do time da empresa, salva no banco local e rascunha a nota de conexão. Use quando ele disser "busca contatos", "quem eu posso chamar nessas vagas" ou /busca-contatos. Também roda como passo 2 de aplica-nas-vagas.
 ---
 
 # busca-contatos

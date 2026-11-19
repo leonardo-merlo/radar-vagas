@@ -147,6 +147,10 @@ a {
   white-space: nowrap;
 }
 
+.tabela td.centro {
+  text-align: center;
+}
+
 .tabela tr.linha-forte td,
 .tabela tr.linha-forte th {
   background: var(--verde-fraco);

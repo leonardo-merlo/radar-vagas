@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { setContactStatus } from "@/app/actions";
 import { CopyButton } from "@/components/vagas/copy-button";
 import { TriageButtons } from "@/components/vagas/triage-buttons";
-import { requireDashboardUser } from "@/lib/auth";
 import type { ContactKind, ContactStatus } from "@/lib/database.types";
 import { SCOPE_LABEL, STATUS_LABEL } from "@/lib/filters";
 import { getJob } from "@/lib/queries";
@@ -39,8 +38,7 @@ export default function JobPage({ params }: PageProps<"/vaga/[id]">) {
 async function Job({ params }: { params: PageProps<"/vaga/[id]">["params"] }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const db = await requireDashboardUser();
-  const result = await getJob(db, id);
+  const result = await getJob(id);
   if (!result) notFound();
   const { job, contacts } = result;
 

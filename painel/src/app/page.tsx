@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { FilterForm } from "@/components/vagas/filter-form";
 import { TriageButtons } from "@/components/vagas/triage-buttons";
-import { requireDashboardUser } from "@/lib/auth";
 import { parseFilters, SCOPE_LABEL, STATUS_LABEL, toSearch } from "@/lib/filters";
 import { listJobs, PAGE_SIZE } from "@/lib/queries";
 
@@ -19,8 +18,7 @@ export default function JobsPage({ searchParams }: PageProps<"/">) {
 
 async function Jobs({ searchParams }: { searchParams: PageProps<"/">["searchParams"] }) {
   const filters = parseFilters(await searchParams);
-  const db = await requireDashboardUser();
-  const { jobs, total } = await listJobs(db, filters);
+  const { jobs, total } = await listJobs(filters);
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
@@ -56,16 +54,16 @@ async function Jobs({ searchParams }: { searchParams: PageProps<"/">["searchPara
                   {job.score_reason ? <div className="mt-1 text-sm text-tinta-fraca">{job.score_reason}</div> : null}
                 </th>
                 <td className={`num ${job.score == null ? "text-tinta-fraca" : ""}`}>{job.score ?? "–"}</td>
-                <td className="num">
+                <td className="centro text-sm">
                   {job.sources.map((source) => (
                     <div key={source}>{source}</div>
                   ))}
                 </td>
-                <td className="num text-sm">
+                <td className="centro text-sm">
                   {SCOPE_LABEL[job.remote_scope]}
                   <div className="text-tinta-fraca">{job.language?.toUpperCase() ?? ""}</div>
                 </td>
-                <td className="num text-sm">{STATUS_LABEL[job.status]}</td>
+                <td className="centro text-sm">{STATUS_LABEL[job.status]}</td>
                 <td>
                   <TriageButtons id={job.id} status={job.status} />
                 </td>

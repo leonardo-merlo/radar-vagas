@@ -2,12 +2,10 @@ import { readFileSync } from "node:fs";
 import { z } from "zod";
 import { loadConfig } from "../config.js";
 import { contactsSearchedToday, createDb, jobById, jobsNeedingContacts, saveContacts } from "../db/client.js";
-import { loadLocalEnv } from "../env.js";
 
 // Usage:
 //   npm run contatos -- pendentes                 companies of approved jobs still without a contact search
 //   npm run contatos -- salvar <job-id> <file>    saves the contacts found (JSON array) and marks the company as searched
-loadLocalEnv();
 
 const ContactSchema = z.object({
   name: z.string().min(2),
@@ -27,9 +25,9 @@ const db = createDb();
 const [command, ...rest] = process.argv.slice(2);
 
 if (command === "pendentes") {
-  const doneToday = await contactsSearchedToday(db);
+  const doneToday = contactsSearchedToday(db);
   const budget = Math.max(0, config.contactSearchesPerDay - doneToday);
-  const jobs = budget > 0 ? await jobsNeedingContacts(db, budget) : [];
+  const jobs = budget > 0 ? jobsNeedingContacts(db, budget) : [];
   console.log(
     JSON.stringify(
       {
@@ -53,8 +51,8 @@ if (command === "pendentes") {
   const [jobId, file] = rest;
   if (!jobId || !file) throw new Error("Uso: npm run contatos -- salvar <job-id> <arquivo.json>");
   const contacts = z.array(ContactSchema).max(config.contactsPerCompany * 2).parse(JSON.parse(readFileSync(file, "utf8")));
-  const job = await jobById(db, jobId);
-  const saved = await saveContacts(db, job, contacts);
+  const job = jobById(db, jobId);
+  const saved = saveContacts(db, job, contacts);
   console.log(`${job.company}: ${saved} contatos salvos; empresa marcada como pesquisada.`);
 } else {
   throw new Error('Comando desconhecido. Use "pendentes" ou "salvar".');

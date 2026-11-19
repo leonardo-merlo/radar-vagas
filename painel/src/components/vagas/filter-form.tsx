@@ -17,7 +17,7 @@ function Select({ name, label, value, options }: { name: string; label: string; 
 
 export function FilterForm({ filters }: { filters: JobFilters }) {
   return (
-    <form method="get" className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8" data-testid="filtros">
+    <form method="get" className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-9" data-testid="filtros">
       <Select
         name="status"
         label="Status"
@@ -36,7 +36,7 @@ export function FilterForm({ filters }: { filters: JobFilters }) {
         Local
         <input className="campo" type="text" name="local" placeholder="São Paulo, Europe" defaultValue={filters.location} />
       </label>
-      <label className="flex flex-col gap-1 text-xs text-tinta-media">
+      <label className="col-span-2 flex flex-col gap-1 text-xs text-tinta-media">
         Cargo ou empresa
         <span className="flex gap-2">
           <input className="campo w-full min-w-0" type="search" name="q" defaultValue={filters.query} />
