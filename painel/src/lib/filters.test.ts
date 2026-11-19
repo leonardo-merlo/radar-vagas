@@ -13,8 +13,8 @@ describe("dashboard filters", () => {
   });
 
   it("round-trips through the query string without default values", () => {
-    const filters = parseFilters({ idioma: "pt", pagina: "3" });
-    expect(toSearch(filters)).toBe("?idioma=pt&pagina=3");
+    const filters = parseFilters({ idioma: "pt", ordem: "recentes", pagina: "3" });
+    expect(toSearch(filters)).toBe("?idioma=pt&ordem=recentes&pagina=3");
   });
 });
 

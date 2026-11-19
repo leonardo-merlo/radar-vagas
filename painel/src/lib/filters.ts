@@ -33,6 +33,9 @@ export const SCOPE_LABEL: Record<RemoteScope, string> = {
 export const PERIODS = { "1": "Hoje", "7": "7 dias", "30": "30 dias", "90": "90 dias", todos: "Tudo" } as const;
 export type Period = keyof typeof PERIODS;
 
+export const SORTS = { nota: "Nota", recentes: "Data" } as const;
+export type Sort = keyof typeof SORTS;
+
 export interface JobFilters {
   status: JobStatus | "todas" | "abertas";
   scope: RemoteScope | "todas";
@@ -42,6 +45,7 @@ export interface JobFilters {
   query: string;
   minScore: number;
   period: Period;
+  sort: Sort;
   page: number;
 }
 
@@ -68,6 +72,7 @@ export function parseFilters(params: RawParams): JobFilters {
     query: (first(params, "q") ?? "").trim().slice(0, 80),
     minScore: Number.isFinite(minScore) ? Math.min(100, Math.max(0, Math.round(minScore))) : 0,
     period: oneOf(first(params, "periodo"), Object.keys(PERIODS) as Period[], "30"),
+    sort: oneOf(first(params, "ordem"), Object.keys(SORTS) as Sort[], "nota"),
     page: Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1,
   };
 }
@@ -97,6 +102,7 @@ export function toSearch(filters: JobFilters, overrides: Partial<JobFilters> = {
   if (merged.query) params.set("q", merged.query);
   if (merged.minScore > 0) params.set("nota", String(merged.minScore));
   if (merged.period !== "30") params.set("periodo", merged.period);
+  if (merged.sort !== "nota") params.set("ordem", merged.sort);
   if (merged.page > 1) params.set("pagina", String(merged.page));
   const search = params.toString();
   return search ? `?${search}` : "";

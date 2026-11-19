@@ -64,9 +64,14 @@ export async function listJobs(filters: JobFilters): Promise<{ jobs: JobRow[]; t
   if (since) add("first_seen_at >= ?", since);
 
   const clause = where.length ? `where ${where.join(" and ")}` : "";
+  const order =
+    filters.sort === "recentes"
+      ? // Same day: real publish dates first, then "seen today" ones, then by score.
+        "substr(coalesce(posted_at, first_seen_at), 1, 10) desc, posted_at is null, score is null, score desc"
+      : "score is null, score desc, coalesce(posted_at, first_seen_at) desc";
   const total = Number((database.prepare(`select count(*) as total from jobs ${clause}`).get(...params) as SqlRow).total);
   const rows = database
-    .prepare(`select * from jobs ${clause} order by score is null, score desc, first_seen_at desc limit ? offset ?`)
+    .prepare(`select * from jobs ${clause} order by ${order} limit ? offset ?`)
     .all(...params, PAGE_SIZE, (filters.page - 1) * PAGE_SIZE) as SqlRow[];
   return { jobs: rows.map(toJob), total };
 }
